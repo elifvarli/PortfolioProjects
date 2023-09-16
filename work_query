@@ -1,0 +1,98 @@
+
+SELECT location, date, total_cases, new_cases, total_deaths, population
+FROM `elif-varli-001.covid_vaccinations.deaths`
+ORDER BY 1,2;
+
+-- Total Cases vs. Total Deaths
+
+-- Percentage of total deaths in the United Kingdom
+
+SELECT location, date, total_cases, total_deaths, round((total_deaths/total_cases)*100, 2) AS death_percentage
+FROM `elif-varli-001.covid_vaccinations.deaths`
+WHERE location = 'United Kingdom'
+ORDER BY 1,2 DESC;
+
+
+-- Percentage of total cases in the United Kingdom
+
+SELECT location, date, population, total_cases, round((total_cases/population)*100, 2) AS case_percentage
+FROM `elif-varli-001.covid_vaccinations.deaths`
+WHERE location = 'United Kingdom'
+ORDER BY 1,2 DESC;
+
+
+-- Counties with the highest infection rate compared to population
+
+SELECT location, population, MAX(total_cases) AS total_infection_count, MAX(round((total_cases/population)*100, 2)) AS max_case_percentage
+FROM `elif-varli-001.covid_vaccinations.deaths`
+GROUP BY location, population
+ORDER BY max_case_percentage DESC;
+
+
+-- Continents' death count
+
+SELECT location, MAX(CAST(total_deaths AS INT)) AS total_death_count
+FROM `elif-varli-001.covid_vaccinations.deaths`
+WHERE 
+  continent IS NULL AND location != "World" AND location != "European Union" AND
+  location != "High income" AND
+  location != "Upper middle income" AND
+  location != "Lower middle income" AND
+  location != "Low income"
+GROUP BY location
+ORDER BY total_death_count DESC;
+
+
+-- Global Numbers
+
+SELECT 
+  date, 
+  SUM(new_cases) AS Total_cases,
+  SUM(new_deaths) AS Total_deaths, 
+  -- SUM(new_deaths)/SUM(new_cases)*100 as death_percentage
+FROM `elif-varli-001.covid_vaccinations.deaths`
+WHERE 
+  continent IS NOT NULL AND Total_cases != 0 AND Total_deaths != 0
+GROUP BY date
+ORDER BY 1,2;
+
+-- Using CTE
+
+WITH vaccinated_population AS
+(
+  SELECT 
+    cd.continent, 
+    cd.location, 
+    cd.date, 
+    cd.population, 
+    cv.new_vaccinations, 
+    SUM(cv.new_vaccinations) 
+    OVER (PARTITION BY cd.location
+    ORDER BY cd.location, cd.date) AS rolling_sum_of_vaccinations
+  FROM `elif-varli-001.covid_vaccinations.deaths` AS cd
+  JOIN `elif-varli-001.covid_vaccinations.vaccinations` AS cv
+  ON cd.location = cv.location AND cd.date = cv.date
+  WHERE cd.continent IS NOT NULL AND cv.new_vaccinations IS NOT NULL
+  ORDER BY 2,3
+)
+SELECT *, round((rolling_sum_of_vaccinations/population)*100, 3)
+FROM vaccinated_population;
+
+-- Temp Table option was not used due to the need of creation of a new documentation.
+
+-- Creating a view for future visualisation (Following query was saved in a different file due to BigQuery's specific view  future)
+
+SELECT 
+    cd.continent, 
+    cd.location, 
+    cd.date, 
+    cd.population, 
+    cv.new_vaccinations, 
+    SUM(cv.new_vaccinations) 
+    OVER (PARTITION BY cd.location
+    ORDER BY cd.location, cd.date) AS rolling_sum_of_vaccinations
+  FROM `elif-varli-001.covid_vaccinations.deaths` AS cd
+  JOIN `elif-varli-001.covid_vaccinations.vaccinations` AS cv
+  ON cd.location = cv.location AND cd.date = cv.date
+  WHERE cd.continent IS NOT NULL AND cv.new_vaccinations IS NOT NULL
+  ORDER BY 2,3
