@@ -40,9 +40,9 @@ and analysis of large datasets, making it ideal for processing and analyzing COV
 
 ## Repository Structure
 
-- **data**: This directory contains the raw and processed data used for the analysis.
+- **data**: This directory contains the processed data used for the analysis.
 
-- **notebooks**: Jupyter notebooks used for data cleaning, exploratory data analysis, and statistical analysis can be found here.
+- **notebooks**: Tableau was used for data cleaning, exploratory data analysis, and statistical analysis can be found here.
 
 - **visualizations**: Visualizations generated during the analysis, including charts and graphs, are stored in this directory.
 
